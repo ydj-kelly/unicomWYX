@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>登录接口</title>
+    <link rel="stylesheet" href="css/WA.css"/>
+    <!--<script src="lib/jquery-1.11.1.min.js"></script>-->
+    <style>
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #contain {
+            width: 350px;
+            height: 330px;
+            position: absolute;
+            left: 350px;
+            bottom: 50px;
+            border: 1px solid lightgray;
+            padding: 10px 15px;
+        }
+
+        .qn-login, #WA-icon, #callPage {
+            display: none;
+        }
+
+        #makeCall {
+            margin-left: 10px;
+        }
+
+        #makeCall, #logout, #hangup {
+            padding: 2px 15px;
+        }
+
+        #tip {
+            position: absolute;
+            bottom: 130px;
+            padding: 2px;
+            font-size: 16px;
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<h2 style="text-align: center;margin-top: 40px">调用登录、登出、挂断、外呼接口</h2>
+
+<div id="contain">
+    <div id="loginPage">
+        <h3 style="text-align: center;margin-bottom: 20px">登录界面</h3>
+
+        <form>
+            <table class="qn-login-table">
+                <tbody>
+                <tr>
+                    <td>企业编号：</td>
+                    <td><input type="text" id="inputEntId" class="qn-input" maxlength="15"/></td>
+                </tr>
+                <tr>
+                    <td>坐席工号：</td>
+                    <td><input type="text" id="agentId" class="qn-input" maxlength="15"/></td>
+                </tr>
+                <tr>
+                    <td>坐席密码：</td>
+                    <td><input type="password" id="agentPassword" class="qn-input" maxlength="15"/></td>
+                </tr>
+                <tr>
+                    <td>坐席分机：</td>
+                    <td><input type="text" id="agentNumber" class="qn-input" maxlength="15"/></td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>
+                        <label for="forceLoginCheckbox" style="cursor: pointer;">
+                            <input id="forceLoginCheckbox" type="checkbox" style="vertical-align: middle;"/>强制登录
+                        </label>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="qn-line">
+                <button type="button" id="login" class="qn-login-button">登录</button>
+            </div>
+        </form>
+    </div>
+    <div id="callPage">
+        <h3 style="text-align: center;margin-bottom: 20px">呼叫界面</h3>
+        呼叫号码：<input type="text" id="callNumber"/>
+        <button id="makeCall" class="btn btn-success">呼叫</button>
+        <div style="text-align: center;margin-top: 20px">
+            <button id="hangup" class="btn btn-success">挂断</button>
+            <button id="logout" class="btn btn-success">登出</button>
+        </div>
+        <div id="tip">
+            请在此进行外呼、挂断、登出操作，此处是调用外呼、挂断、登出接口的示例。
+        </div>
+    </div>
+</div>
+<!--<script src="WYX.min.js"></script>-->
+<script src="http://mm.ccod.com:8080/wyx/WYX.min.js"></script>
+<script>
+    WYX.init({
+
+        ui: false,//设置为false表示自定义操作界面，不使用标准操作界面
+
+        //在回调函数中，调用接口
+        callback: function () {
+            /**
+             * 登录接口调用
+             * @param entId：企业ID
+             * @param agentId:坐席ID
+             * @param agentPassword:坐席密码
+             * @param agentNumber:坐席分机号码
+             * */
+            $("#login").click(function () {
+                var loginResult = WYX.extend.login({
+                    entId: $("#inputEntId").val(),
+                    agentId: $("#agentId").val(),
+                    agentPassword: $("#agentPassword").val(),
+                    agentNumber: $("#agentNumber").val(),
+                    isForce: $("input[type='checkbox']").is(':checked'),
+                });
+            });
+
+            /**
+             * 外呼接口调用
+             * @param outCallNumber:外呼电话号码
+             * */
+            $("#makeCall").click(function () {
+                WYX.extend.makeCall({
+//                        outCallNumber: $("#callNumber").val()
+                    outCallNumber: "cOc2iStq6RBhaXTKcS+Lv9gK8DnmgUVl3vcrPghMjV+4CHVbrdhENtnXiy5a8fbC"
+                });
+            });
+
+            //挂断接口调用
+            $("#hangup").click(function () {
+                WYX.extend.hangup();
+            });
+
+            //登出接口调用
+            $("#logout").click(function () {
+                WYX.extend.logout();
+            });
+
+            /**
+             * 注册自定义事件处理器
+             * 通过data中的type字段判断某种操作成功，比如登录、登出、置闲、置忙等
+             * data中的ext字段返回事件详细信息
+             */
+            WYX.registerEventHandler(function (data) {
+
+                //获取到事件之后，可以根据业务需要进行自己的处理，比如：获取登录事件之后跳转页面等，如下
+                if (data.type == 'EVENT_AGENT_LOGIN') {
+                    $("#loginPage").css({display: "none"});
+                    $("#callPage").css({display: "block"});
+                    $("#tip").css({display: "block"});
+                    console.log('坐席登陆成功');
+                    console.log("坐席登录成功的事件详细信息：" + JSON.stringify(data.ext));
+                }
+                if (data.type == 'EVENT_AGENT_LOGOUT') {
+                    $("#callPage").css({display: "none"});
+                    $("#tip").css({display: "none"});
+                    $("#loginPage").css({display: "block"});
+                    console.log('坐席登出成功');
+                    console.log("坐席登出成功的事件详细信息：" + JSON.stringify(data.ext));
+                }
+
+                if (data.type == 'EVENT_OUTBOUND_ALERTING_TP') {
+                    console.log("外呼坐席振铃事件详细信息：" + JSON.stringify(data.ext))
+                }
+                if (data.type == 'EVENT_OUTBOUND_CONNECTED_TP') {
+                    console.log('外呼坐席接通事件详细信息' + JSON.stringify(data.ext));
+                }
+            });
+
+            /**
+             * 注册自定义结果处理器
+             * 通过data中的type字段判断某种操作命令发送成功
+             * data中的ext字段返回详细信息
+             */
+            WYX.registerResultHandler(function (data) {
+                //通过以下方式判断自动登录成功，根据业务需要进行自己的处理，data.ext为返回详细信息
+                if (data.type == "autoLogin" && data.code == "000") {
+                    console.log("自动登录返回信息：" + JSON.stringify(data));
+
+                    $("#loginPage").css({display: "none"});
+                    $("#callPage").css({display: "block"});
+                    $("#tip").css({display: "block"});
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
